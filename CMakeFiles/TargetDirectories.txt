@@ -1,0 +1,3 @@
+/home/felix/Documents/TER/CMakeFiles/rebuild_cache.dir
+/home/felix/Documents/TER/CMakeFiles/edit_cache.dir
+/home/felix/Documents/TER/CMakeFiles/fingerprint_process.dir
