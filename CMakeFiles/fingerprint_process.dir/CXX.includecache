@@ -9,6 +9,8 @@
 /home/felix/Documents/TER/fingerprint_process.cpp
 opencv4/opencv2/opencv.hpp
 /home/felix/Documents/TER/opencv4/opencv2/opencv.hpp
+cstdio
+-
 opencv2/imgproc.hpp
 -
 opencv4/opencv2/xfeatures2d.hpp

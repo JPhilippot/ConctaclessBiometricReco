@@ -1,4 +1,5 @@
 #include "opencv4/opencv2/opencv.hpp"
+#include <cstdio>
 #include <opencv2/imgproc.hpp>
 #include <opencv4/opencv2/xfeatures2d.hpp>
 #include <fstream>
@@ -55,6 +56,7 @@ void createCrossingNumber(Mat& im, Mat& out){
 
             if (im.at<uchar>(i,j)==1){
                 marker.at<uchar>(i,j)=(abs(p2-p3)+abs(p3-p4)+abs(p4-p5)+abs(p5-p6)+abs(p6-p7)+abs(p7-p8)+abs(p8-p9)+abs(p9-p2))/2;
+                //printf("value of marker i j : %d %d %d\n",marker.at<uchar>(i,j), i , j);
             }
             else{
                 marker.at<uchar>(i,j)=0;
@@ -120,48 +122,63 @@ int main( int argc, const char** argv )
 
     //cornerHarris(input_thinned, harris_corners, 2, 3, 0.04, BORDER_DEFAULT);
 
-    //normalize(input_thinned, input_thinned, 0, 1, NORM_MINMAX, CV_8UC1, Mat());
+    
+    Mat crossingNumber;
+
+    threshold(input_thinned, crossingNumber, 0, 1, THRESH_BINARY | THRESH_OTSU);
+    crossingNumber.copyTo(container( Rect(0, 0, input.cols, input.rows) ) );
+    imshow("threshold ok ?", container); waitKey(0);
+
+    createCrossingNumber(crossingNumber, harris_corners);
+
+    normalize(harris_corners, harris_normalised, 0, 255, NORM_MINMAX, CV_8UC1, Mat());
     
 
 
     input_thinned.copyTo( container( Rect(0, 0, input.cols, input.rows) ) );
-    harris_corners.copyTo(container(Rect(input.cols,0,input.cols,input.rows)));
+    harris_normalised.copyTo(container(Rect(input.cols,0,input.cols,input.rows)));
 
-    imshow("thin vs CN", container) ; waitKey(0);
+    imshow("thin vs CN(norm)", container) ; waitKey(0);
 
 
-    Mat crossingNumber;
-
-    threshold(input_thinned, crossingNumber, 0, 1, THRESH_BINARY | THRESH_OTSU);
-
-    createCrossingNumber(crossingNumber, harris_corners);
 
     vector<KeyPoint> keypoints;
 
+    Mat rescaled;
+    convertScaleAbs(harris_normalised, rescaled);
+    Mat harris_c(rescaled.rows, rescaled.cols, CV_8UC3);
+    Mat in[] = { rescaled, rescaled, rescaled };
+    int from_to[] = { 0,0, 1,1, 2,2 };
+    mixChannels( in, 3, &harris_c, 1, from_to, 3 );
+
     for(int x=0; x<harris_corners.cols; x++){
         for(int y=0; y<harris_corners.rows; y++){
-            if ((int)harris_corners.at<int>(y,x)==1 || (int)harris_corners.at<int>(y,x)==3){
-                circle(harris_corners, Point(x, y), 5, Scalar(0,255,0), 1);
-                circle(harris_corners, Point(x, y), 1, Scalar(0,0,255), 1);
+            if ((int)harris_corners.at<uchar>(y,x)==1 || (int)harris_corners.at<uchar>(y,x)==3){
+                //printf("coucou jen ai un");
+                circle(harris_c, Point(x, y), 5, Scalar(0,255,0), 1);
+                circle(harris_c, Point(x, y), 1, Scalar(0,0,255), 1);
                 keypoints.push_back( KeyPoint (x, y, 1) );
             }
         }
     }
+    //imshow("temp", harris_normalised); waitKey(0);
+    imshow("temp", harris_c); waitKey(0);
+    printf("size ? %d\n",(int)keypoints.size());
 
 
     //Sobel(input_thinned, harris_corners, 0, 2, 2);
     //normalize(harris_corners, harris_normalised, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
 
     // Select the strongest corners that you want
-    int threshold_harris = 125;
+    int threshold_harris = 75;
     
 
     // Make a color clone for visualisation purposes
-    Mat rescaled;
+    //
 
     //harris_normalised.copyTo(container (Rect(0,0,input.cols, input.rows)));
     input_thinned.copyTo( container( Rect(0, 0, input.cols, input.rows) ) );
-    harris_corners.copyTo(container(Rect(input.cols,0,input.cols,input.rows)));
+    harris_normalised.copyTo(container(Rect(input.cols,0,input.cols,input.rows)));
 
     imshow("thin vs CN 1 and 3", container) ; waitKey(0);
 
@@ -198,7 +215,7 @@ int main( int argc, const char** argv )
     // You can now store the descriptor in a matrix and calculate all for each image.
     // Since we just got the hamming distance brute force matching left, we will take another image and calculate the descriptors also.
     // Removed as much overburden comments as you can find them above
-    Mat input2 = imread("FP3/107_5.tif", IMREAD_GRAYSCALE);
+    Mat input2 = imread("FP3/101_1.tif", IMREAD_GRAYSCALE);
     Mat input_binary2;
     threshold(input2, input_binary2, 0, 255, THRESH_BINARY_INV | THRESH_OTSU);
     Mat input_thinned2 = input_binary2.clone();
