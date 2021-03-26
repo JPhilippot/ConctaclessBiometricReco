@@ -161,11 +161,12 @@ double compareWithHaris(char* nom1, char* nom2, int harrisThreshold, double radi
     for(int i=0; i < matches.size(); i++){
         for (int j=0;j<matches[0].size();j++){
             DMatch current_match = matches[i][j];
-            printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
+            //printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
             if (current_match.distance>1e-3){score++;}
         }
     }
-    cerr << endl << "Current matching score = " << score << endl;
+    //cerr << endl << "Current matching score = " << score << endl;
+    printf("Harris\t%d\t%s\t%s\t%d\t%d\t%d\t%f\n",harrisThreshold,nom1,nom2,(int)keypoints.size(),(int)keypoints2.size(),score,radiusSize);
     return (score);
 
 }
@@ -248,11 +249,11 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize){
     for(int i=0; i < matches.size(); i++){
         for(int j=0;j<matches[i].size();j++){
             DMatch current_match = matches[i][j];
-            printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
+            //printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
             if (current_match.distance>1e-3){score++;}
         }
     }
-    cerr << endl << "Current matching score = " << score << endl;
+    printf("CN\t%d\t%s\t%s\t%d\t%d\t%d\t%f\n",3,nom1,nom2,(int)keypoints.size(),(int)keypoints2.size(),score,radiusSize);
     return(score);
 
 }
@@ -263,7 +264,7 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize){
 int main( int argc, const char** argv )
 {
     compareWithCN("FP3/101_1.tif", "FP3/101_6.tif", 70);
-    //compareWithHaris("FP3/101_1.tif", "FP3/101_6.tif",120, 70);
+    //compareWithHaris("FP3/101_1.tif", "FP3/101_6.tif",120, 70); 
     
 
     return 0;
