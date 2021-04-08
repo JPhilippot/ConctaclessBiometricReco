@@ -1,0 +1,23 @@
+[ INFO:0] global /home/felix/Documents/TER/opencv/modules/core/src/parallel/registry_parallel.impl.hpp (90) ParallelBackendRegistry core(parallel): Enabled backends(3, sorted by priority): ONETBB(1000); TBB(990); OPENMP(980)
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	10.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	15.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	20.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	25.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	30.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	35.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	40.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	45.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	0	50.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	2	55.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	16	60.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	41	65.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	111	70.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	315	75.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	747	80.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	1685	85.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	3583	90.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	6913	95.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	12535	100.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	21572	105.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	34709	110.000000
+CN	3	cleaned/108_4_cleaned.tif	cleaned/109_7_cleaned.tif	398	409	52175	115.000000

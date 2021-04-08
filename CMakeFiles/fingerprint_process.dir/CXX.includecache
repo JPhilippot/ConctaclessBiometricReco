@@ -13,9 +13,15 @@ cstdio
 -
 opencv2/imgproc.hpp
 -
+opencv4/opencv2/core/cvstd_wrapper.hpp
+-
+opencv4/opencv2/core/hal/interface.h
+-
 opencv4/opencv2/xfeatures2d.hpp
 -
 fstream
+-
+bitset
 -
 
 /usr/local/include/opencv4/opencv2/core.hpp

@@ -1,6 +1,7 @@
 #include "opencv4/opencv2/opencv.hpp"
 #include <cstdio>
 #include <opencv2/imgproc.hpp>
+#include <opencv4/opencv2/core/cvstd_wrapper.hpp>
 #include <opencv4/opencv2/core/hal/interface.h>
 #include <opencv4/opencv2/xfeatures2d.hpp>
 #include <fstream>
@@ -174,7 +175,7 @@ double compareWithHaris(char* nom1, char* nom2, int harrisThreshold, double radi
 
 }
 
-double compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson){
+void compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson, int* VP, int* FP, int*VN, int* FN){
 
     Mat input = imread(nom1, IMREAD_GRAYSCALE);
     if(input.empty()){
@@ -233,7 +234,7 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson)
     mixChannels( in, 3, &harris_c, 1, from_to, 3 );
     for(int x=0; x<harris_corners2.cols; x++){
         for(int y=0; y<harris_corners2.rows; y++){
-            if ((int)harris_corners2.at<uchar>(y,x)==3 || (int)harris_corners2.at<uchar>(y,x)==1){
+            if ((int)harris_corners2.at<uchar>(y,x)==3 || (int)harris_corners2.at<uchar>(y,x)==3){
                 circle(harris_c2, Point(x, y), 5, Scalar(0,255,0), 1);
                 circle(harris_c2, Point(x, y), 1, Scalar(0,0,255), 1);
                 keypoints2.push_back( KeyPoint (x, y, 1) );
@@ -246,18 +247,30 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson)
     //printf("problemeavant\n");
     Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
     vector< DMatch > matches;
-    matcher->match(descriptors, descriptors2, matches);
+
+    
+    //matcher->match(descriptors, descriptors2, matches);
     //printf("%f\n",descriptors.at<float>(3,7));
-    int score=0;
+
+
+    
+    matcher->match(descriptors,descriptors2,matches);
+
     if (!matches.empty()){
         for (int i=0;i<matches.size();i++){
-            if (matches[i].distance<40.0){
-                printf("%f\n",matches[i].distance);
-                score++;
+            if (matches[i].distance<=radiusSize){
+                if (samePerson){(*VP)++;}
+                if (!samePerson){(*FP)++;}
+            }
+            else{
+                if (samePerson){(*FN)++;}
+                if (!samePerson){(*VN)++;}
             }
         }    
     }
-    printf("score : %d\n",score);
+
+
+    
     // int score = 0;
     // for(int i=0; i < matches.size(); i++){
     //     for(int j=0;j<matches[i].size();j++){
@@ -274,7 +287,7 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson)
     //printf("problemeapres\n");
     //printf("CN\t%d\t%s\t%s\t%d\t%d\t%d\t%f\n",3,nom1,nom2,(int)keypoints.size(),(int)keypoints2.size(),score,radiusSize);
     
-    return(score);
+    //printf("VP : %d FP : %d VN : %d FN : %d\n",VP,FP,VN,FN);
 
 }
 
@@ -284,12 +297,25 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson)
 int main( int argc, const char** argv )
 {
     //compareWithCN("FP3/101_1.tif", "FP3/101_6.tif", 70);
-    //for(int i=75;i<85;i+=5){
+    for(int i=10;i<=100;i+=10){
+
+        int *VP=new int; *VP=0;
+        int *FP=new int; *FP=0;
+        int *VN=new int; *VN=0;
+        int *FN=new int; *FN=0;
         //compareWithHaris("cleaned/101_1_cleaned.tif", "cleaned/101_2_cleaned.tif", 125, (double)i+15);
-        compareWithCN("cleaned/108_4_cleaned.tif","cleaned/108_5_cleaned.tif",(double)100.0);
+        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/104_8_cleaned.tif",(double)i,false, VP, FP, VN, FN);
+        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/108_4_cleaned.tif",(double)i,false, VP, FP, VN, FN);
+        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/109_7_cleaned.tif",(double)i,false, VP, FP, VN, FN);
+
+        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/101_2_cleaned.tif",(double)i,true, VP, FP, VN, FN);
+        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/101_3_cleaned.tif",(double)i,true, VP, FP, VN, FN);
+        //compareWithCN("cleaned/101_1_cleaned.tif","cleaned/109_7_cleaned.tif",(double)i,true, VP, FP, VN, FN);
+
+        printf("%d %f %f\n",i,(double)((double)*VP/(double)(*VP+*FN)),1.0-(double)((double)*VN/(double)(*VN+*FP)));
         
         
-        
+    }
     //}
     // for(int i=10;i<120;i+=5){
     // //compareWithHaris("cleaned/101_1_cleaned.tif", "cleaned/101_2_cleaned.tif", 125, (double)i+15);
