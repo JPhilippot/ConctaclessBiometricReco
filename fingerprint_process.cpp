@@ -1,8 +1,10 @@
 #include "opencv4/opencv2/opencv.hpp"
 #include <cstdio>
 #include <opencv2/imgproc.hpp>
+#include <opencv4/opencv2/core/hal/interface.h>
 #include <opencv4/opencv2/xfeatures2d.hpp>
 #include <fstream>
+#include <bitset>
 
 using namespace std;
 using namespace cv;
@@ -163,6 +165,7 @@ double compareWithHaris(char* nom1, char* nom2, int harrisThreshold, double radi
             DMatch current_match = matches[i][j];
             //printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
             if (current_match.distance>1e-3){score++;}
+            //score++;
         }
     }
     //cerr << endl << "Current matching score = " << score << endl;
@@ -171,7 +174,7 @@ double compareWithHaris(char* nom1, char* nom2, int harrisThreshold, double radi
 
 }
 
-double compareWithCN(char* nom1, char* nom2, double radiusSize){
+double compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson){
 
     Mat input = imread(nom1, IMREAD_GRAYSCALE);
     if(input.empty()){
@@ -196,7 +199,7 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize){
     mixChannels( in, 3, &harris_c, 1, from_to, 3 );
     for(int x=0; x<harris_corners.cols; x++){
         for(int y=0; y<harris_corners.rows; y++){
-            if ((int)harris_corners.at<uchar>(y,x)==3 || (int)harris_corners.at<uchar>(y,x)==3){
+            if ((int)harris_corners.at<uchar>(y,x)==3 || (int)harris_corners.at<uchar>(y,x)==1){
                 circle(harris_c, Point(x, y), 5, Scalar(0,255,0), 1);
                 circle(harris_c, Point(x, y), 1, Scalar(0,0,255), 1);
                 keypoints.push_back( KeyPoint (x, y, 1) );
@@ -230,7 +233,7 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize){
     mixChannels( in, 3, &harris_c, 1, from_to, 3 );
     for(int x=0; x<harris_corners2.cols; x++){
         for(int y=0; y<harris_corners2.rows; y++){
-            if ((int)harris_corners2.at<uchar>(y,x)==3 || (int)harris_corners2.at<uchar>(y,x)==3){
+            if ((int)harris_corners2.at<uchar>(y,x)==3 || (int)harris_corners2.at<uchar>(y,x)==1){
                 circle(harris_c2, Point(x, y), 5, Scalar(0,255,0), 1);
                 circle(harris_c2, Point(x, y), 1, Scalar(0,0,255), 1);
                 keypoints2.push_back( KeyPoint (x, y, 1) );
@@ -240,20 +243,37 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize){
     Mat descriptors2;
     orb_descriptor->compute(input_thinned2, keypoints2, descriptors2);
 
-
+    //printf("problemeavant\n");
     Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-    vector<vector< DMatch >> matches;
-    matcher->radiusMatch(descriptors, descriptors2, matches, radiusSize);
-
-    int score = 0;
-    for(int i=0; i < matches.size(); i++){
-        for(int j=0;j<matches[i].size();j++){
-            DMatch current_match = matches[i][j];
-            //printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
-            if (current_match.distance>1e-3){score++;}
-        }
+    vector< DMatch > matches;
+    matcher->match(descriptors, descriptors2, matches);
+    //printf("%f\n",descriptors.at<float>(3,7));
+    int score=0;
+    if (!matches.empty()){
+        for (int i=0;i<matches.size();i++){
+            if (matches[i].distance<40.0){
+                printf("%f\n",matches[i].distance);
+                score++;
+            }
+        }    
     }
-    printf("CN\t%d\t%s\t%s\t%d\t%d\t%d\t%f\n",3,nom1,nom2,(int)keypoints.size(),(int)keypoints2.size(),score,radiusSize);
+    printf("score : %d\n",score);
+    // int score = 0;
+    // for(int i=0; i < matches.size(); i++){
+    //     for(int j=0;j<matches[i].size();j++){
+    //         if (!matches.empty()){
+    //             DMatch current_match = matches[i][j];
+            
+    //             printf("idTRAIN %d, idQUERRY %d, score %f\n",current_match.trainIdx,current_match.queryIdx,current_match.distance);
+    //         }
+    //         //printf("%f\n",current_match.distance);
+    //         //if (current_match.distance>=0){score++;}
+    //         //printf("%f\n",current_match.distance);
+    //     }
+    // }
+    //printf("problemeapres\n");
+    //printf("CN\t%d\t%s\t%s\t%d\t%d\t%d\t%f\n",3,nom1,nom2,(int)keypoints.size(),(int)keypoints2.size(),score,radiusSize);
+    
     return(score);
 
 }
@@ -263,8 +283,24 @@ double compareWithCN(char* nom1, char* nom2, double radiusSize){
 
 int main( int argc, const char** argv )
 {
-    compareWithCN("FP3/101_1.tif", "FP3/101_6.tif", 70);
-    //compareWithHaris("FP3/101_1.tif", "FP3/101_6.tif",120, 70); 
+    //compareWithCN("FP3/101_1.tif", "FP3/101_6.tif", 70);
+    //for(int i=75;i<85;i+=5){
+        //compareWithHaris("cleaned/101_1_cleaned.tif", "cleaned/101_2_cleaned.tif", 125, (double)i+15);
+        compareWithCN("cleaned/108_4_cleaned.tif","cleaned/108_5_cleaned.tif",(double)100.0);
+        
+        
+        
+    //}
+    // for(int i=10;i<120;i+=5){
+    // //compareWithHaris("cleaned/101_1_cleaned.tif", "cleaned/101_2_cleaned.tif", 125, (double)i+15);
+    // compareWithCN("cleaned/101_1_cleaned.tif","cleaned/104_7_cleaned.tif",(double)i);
+        
+        
+        
+    // }
+    
+    
+    
     
 
     return 0;
