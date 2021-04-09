@@ -6,6 +6,7 @@
 #include <opencv4/opencv2/xfeatures2d.hpp>
 #include <fstream>
 #include <bitset>
+#include <string>
 
 using namespace std;
 using namespace cv;
@@ -175,7 +176,7 @@ double compareWithHaris(char* nom1, char* nom2, int harrisThreshold, double radi
 
 }
 
-void compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson, int* VP, int* FP, int*VN, int* FN){
+void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson, int* VP, int* FP, int*VN, int* FN){
 
     Mat input = imread(nom1, IMREAD_GRAYSCALE);
     if(input.empty()){
@@ -297,33 +298,37 @@ void compareWithCN(char* nom1, char* nom2, double radiusSize, bool samePerson, i
 int main( int argc, const char** argv )
 {
     //compareWithCN("FP3/101_1.tif", "FP3/101_6.tif", 70);
+
+    double minDist = 100.0;
     for(int i=10;i<=100;i+=10){
 
         int *VP=new int; *VP=0;
         int *FP=new int; *FP=0;
         int *VN=new int; *VN=0;
         int *FN=new int; *FN=0;
-        //compareWithHaris("cleaned/101_1_cleaned.tif", "cleaned/101_2_cleaned.tif", 125, (double)i+15);
-        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/104_8_cleaned.tif",(double)i,false, VP, FP, VN, FN);
-        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/108_4_cleaned.tif",(double)i,false, VP, FP, VN, FN);
-        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/109_7_cleaned.tif",(double)i,false, VP, FP, VN, FN);
+        
+        for (int personne = 1;personne<10;personne++){
+            for (int image =1;image<5;image++){
+                if (!(personne==9 && image==1)){
+                    std::string deb = std::string("cleaned/10");
+                    deb += std::to_string(personne);
+                    deb += std::string("_");
+                    deb+=std::to_string(image);
+                    deb+=std::string("_cleaned.tif");
+                    compareWithCN(string("cleaned/109_1_cleaned.tif"),deb,(double)i,personne==9, VP, FP, VN, FN);
+                }
+            }
+        }
 
-        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/101_2_cleaned.tif",(double)i,true, VP, FP, VN, FN);
-        compareWithCN("cleaned/101_1_cleaned.tif","cleaned/101_3_cleaned.tif",(double)i,true, VP, FP, VN, FN);
-        //compareWithCN("cleaned/101_1_cleaned.tif","cleaned/109_7_cleaned.tif",(double)i,true, VP, FP, VN, FN);
-
-        printf("%d %f %f\n",i,(double)((double)*VP/(double)(*VP+*FN)),1.0-(double)((double)*VN/(double)(*VN+*FP)));
+        
+        double sensitivite = (double)((double)*VP/(double)(*VP+*FN));
+        double specificite = 1.0-(double)((double)*VN/(double)(*VN+*FP));
+        minDist=std::min(minDist,sqrt(pow(0.0-sensitivite,2.0)+pow(1.0-specificite,2.0)));
+        printf("%d %f %f %f\n",i,sensitivite,specificite,sqrt(pow(0.0-sensitivite,2.0)+pow(1.0-specificite,2.0)));
         
         
     }
-    //}
-    // for(int i=10;i<120;i+=5){
-    // //compareWithHaris("cleaned/101_1_cleaned.tif", "cleaned/101_2_cleaned.tif", 125, (double)i+15);
-    // compareWithCN("cleaned/101_1_cleaned.tif","cleaned/104_7_cleaned.tif",(double)i);
-        
-        
-        
-    // }
+
     
     
     

@@ -23,6 +23,8 @@ fstream
 -
 bitset
 -
+string
+-
 
 /usr/local/include/opencv4/opencv2/core.hpp
 opencv2/core/cvdef.h
