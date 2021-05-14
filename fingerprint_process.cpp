@@ -1,5 +1,6 @@
 #include "opencv4/opencv2/opencv.hpp"
 #include <cstdio>
+#include <opencv2/core/base.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv4/opencv2/core/cvstd_wrapper.hpp>
 #include <opencv4/opencv2/core/hal/interface.h>
@@ -225,7 +226,7 @@ std::vector<KeyPoint>* KMeansClusterization(std::vector<KeyPoint>& minutiae, int
 
     std::vector<KeyPoint>* centroidArray = new std::vector<KeyPoint>();
 
-    std::vector<Point2f> ClusterCenters = *new std::vector<Point2f>();
+    std::vector<Point2f> clusterCenters = *new std::vector<Point2f>();
 
 // on stocke ici les clusters .... useless ?
     // std::vector<std::vector<Point2f>> clusteredMinutiae = *new std::vector<std::vector<Point2f>>();
@@ -236,7 +237,9 @@ std::vector<KeyPoint>* KMeansClusterization(std::vector<KeyPoint>& minutiae, int
 
     int randIndex = (int)(rand()%minutiae.size());
     KeyPoint c1 = minutiae[0];
-    centroidArray->push_back(c1);
+    //centroidArray->push_back(c1);
+
+    clusterCenters.push_back(c1.pt);
 
     // float meanDist = 0.0;
     // for (int k=0; k<(int)minutiae.size();k++){
@@ -276,22 +279,49 @@ std::vector<KeyPoint>* KMeansClusterization(std::vector<KeyPoint>& minutiae, int
         int furthestPointIndice=0;
         for (int k =0;k<(int)(minutiae.size());k++){
             float dist = 0.0;
-            for (int center=0;center<=c;center++){
-                dist+=distance(minutiae[k].pt,(*centroidArray)[center].pt);
+            for (int center=0;center<c;center++){
+                dist+=distance(minutiae[k].pt,(clusterCenters)[center]);
             }
             if (dist>furthestDist){
                     furthestDist = dist;
                     furthestPointIndice=k;
-                }
+            }
         }
     //furthest point has been found. must now add it to clusterCentroids
-        centroidArray->push_back(minutiae[furthestPointIndice]);
+        clusterCenters.push_back(minutiae[furthestPointIndice].pt);
+
+    //cluster centers become their mean value ; then repeat
+        Point2f* tempCenters = new Point2f[c];
+        int* tabOcc = new int[c];
+        for (int k = 0; k<(int)minutiae.size();k++){
+            float minDist = distance(minutiae[k].pt,clusterCenters[0]);
+            int clusterNumber = 0;
+            for(int cluster = 0 ; cluster<c;cluster++){
+                if (distance(minutiae[k].pt,clusterCenters[cluster])<minDist){
+                    minDist=distance(minutiae[k].pt,clusterCenters[cluster]);
+                    clusterNumber=cluster;
+                }
+
+            }
+            tempCenters[clusterNumber].x+=minutiae[k].pt.x;
+            tempCenters[clusterNumber].y+=minutiae[k].pt.y;
+            tabOcc[clusterNumber]++;
+        }
+        for (int i = 0;i<c;i++){
+            tempCenters[i].x/=(float)tabOcc[i];
+            tempCenters[i].y/=(float)tabOcc[i];
+            clusterCenters[i]=tempCenters[i];
+        }
+        
     }
     //printf("%d taille\n",(int)centroidArray->size());
 
     // for (int k=0;k<(int)centroidArray->size();k++){
     //     printf("x : %f     y : %f\n",(*centroidArray)[k].pt.x,(*centroidArray)[k].pt.y);
     // }
+    for (int i =0;i<nombreMinutiaeFinal;i++){
+        centroidArray->push_back(*new KeyPoint(clusterCenters[i].x,clusterCenters[i].y,1));
+    }
 
     return centroidArray;
     
@@ -343,7 +373,7 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
 
     //compute the barycentre 
 
-    std::vector<KeyPoint> cherrypicked = *centroidPicking(keypoints, 20);
+    std::vector<KeyPoint> cherrypicked = *centroidPicking(keypoints, 40);
 
     //OR use kmeans clusters :
 
@@ -391,8 +421,8 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
     }
 
 
-    //std::vector<KeyPoint> cherrypicked2 = *centroidPicking(keypoints2, 20);
-    std::vector<KeyPoint> cherrypicked2 = *KMeansClusterization(keypoints2, 20);
+    std::vector<KeyPoint> cherrypicked2 = *centroidPicking(keypoints2, 40);
+    //std::vector<KeyPoint> cherrypicked2 = *KMeansClusterization(keypoints2, 20);
 
     for(int pick =0;pick<cherrypicked2.size();pick++){
         circle(harris_c2, Point(cherrypicked2[pick].pt.x, cherrypicked2[pick].pt.y), 5, Scalar(0,255,0), 1);
@@ -474,7 +504,7 @@ int main( int argc, const char** argv )
                     // deb += std::string("_");
                     // deb+=std::to_string(image);
                     // deb+=std::string("_cleaned.tif");
-                    compareWithCN(string("cleaned/106_8_cleaned.tif"),string("cleaned/102_1_cleaned.tif"),(double)i,!true, VP, FP, VN, FN);
+                    compareWithCN(string("cleaned/109_1_cleaned.tif"),string("cleaned/106_3_cleaned.tif"),(double)i,true, VP, FP, VN, FN);
                     printf("VP : %d FP : %d VN : %d FN : %d\n",*VP,*FP,*VN,*FN);
                 //}
             //}
