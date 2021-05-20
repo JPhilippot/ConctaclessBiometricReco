@@ -1,6 +1,7 @@
 #include "opencv4/opencv2/opencv.hpp"
 #include <cstdio>
 #include <opencv2/core/base.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv4/opencv2/core/cvstd_wrapper.hpp>
 #include <opencv4/opencv2/core/hal/interface.h>
@@ -187,7 +188,31 @@ float distance(Point2f p1, Point2f p2){
     return std::sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
 }
 
-std::vector<KeyPoint>* centroidPicking(std::vector<KeyPoint> &listePoints, int nombreMinutiaeFinal){
+
+std::vector<KeyPoint>* pickDistantPoints(std::vector<KeyPoint>* sortedPoints, double radius, int pointsNbr){ //sorted points -> around centroid (min dist)
+
+    //std::vector<KeyPoint> leftToAnalyse = std::vector<KeyPoint>(*sortedPoints); //useless ?
+    std::vector<KeyPoint>* cherrypicked = new std::vector<KeyPoint>();
+
+    cherrypicked->push_back((*sortedPoints)[0]);//leftToAnalyse.erase(leftToAnalyse.begin());
+
+    int i =1; 
+    while((int)cherrypicked->size()<pointsNbr && i<(int)sortedPoints->size()){
+        bool flag = true;
+        for (int p=0; p<(int)cherrypicked->size();p++){
+            flag = flag && distance((*cherrypicked)[p].pt,(*sortedPoints)[i].pt)>radius;
+            if (!flag){break;}
+        }
+        if (flag){
+            cherrypicked->push_back((*sortedPoints)[i]);//leftToAnalyse.erase(leftToAnalyse.begin()+i);
+        }
+        i++;
+    }
+    
+    return(cherrypicked);
+}
+
+std::vector<KeyPoint>* centroidPicking(std::vector<KeyPoint> &listePoints, double radius, int nombreMinutiaeFinal){
 
 
     float centroidX =0.0;                           
@@ -204,7 +229,7 @@ std::vector<KeyPoint>* centroidPicking(std::vector<KeyPoint> &listePoints, int n
     //cherrypick centered minutiae (ugly sorting algorithm ?)
 
     std::vector<KeyPoint>* res = new std::vector<KeyPoint>();
-    for(int c =0; c<std::min(nombreMinutiaeFinal,(int)listePoints.size());c++){
+    for(int c =0; c<(int)listePoints.size();c++){
         float minDist = distance(listePoints[0].pt, centroidX,centroidY);
         int minK=0;
         for (int k=0;k<listePoints.size();k++){
@@ -217,10 +242,16 @@ std::vector<KeyPoint>* centroidPicking(std::vector<KeyPoint> &listePoints, int n
         listePoints.erase(listePoints.begin()+minK);
     }
 
-    return (res);
+    std::vector<KeyPoint>* resPrime = pickDistantPoints(res, radius, nombreMinutiaeFinal);
+
+    return (resPrime);
 
 
 }
+
+
+
+
 
 std::vector<KeyPoint>* KMeansClusterization(std::vector<KeyPoint>& minutiae, int nombreMinutiaeFinal){
 
@@ -331,6 +362,10 @@ std::vector<KeyPoint>* KMeansClusterization(std::vector<KeyPoint>& minutiae, int
 
 void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson, int* VP, int* FP, int*VN, int* FN){
 
+
+    double delta1 = 10.0;
+
+
     Mat input = imread(nom1, IMREAD_GRAYSCALE);
     if(input.empty()){
 	    cerr << "Image not read correctly. Check if path is correct!" << endl;
@@ -362,7 +397,7 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
 
     for(int x=0; x<harris_corners.cols; x++){
         for(int y=0; y<harris_corners.rows; y++){
-            if ((int)harris_corners.at<uchar>(y,x)==3 || (int)harris_corners.at<uchar>(y,x)==3){
+            if ((int)harris_corners.at<uchar>(y,x)==1 || (int)harris_corners.at<uchar>(y,x)==3){
                 //circle(harris_c, Point(x, y), 5, Scalar(0,255,0), 1);
                 circle(harris_c, Point(x, y), 2, Scalar(0,0,255), 1);
                 keypoints.push_back( KeyPoint (x, y, 1) );
@@ -373,7 +408,7 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
 
     //compute the barycentre 
 
-    std::vector<KeyPoint> cherrypicked = *centroidPicking(keypoints, 40);
+    std::vector<KeyPoint> cherrypicked = *centroidPicking(keypoints, delta1,  40);
 
     //OR use kmeans clusters :
 
@@ -387,8 +422,17 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
 
     Ptr<Feature2D> orb_descriptor = ORB::create();
     Mat descriptors;
+
+
     orb_descriptor->compute(input_thinned, cherrypicked, descriptors); //cherrypicked instead
 
+
+
+    // for (int i =0; i<descriptors.cols;i++){
+    //     for (int j =0; j<descriptors.rows;j++){
+    //        printf("%d %d %f \n",i,j,descriptors.at<float>(i,j));
+    //     }
+    // }
 
 
 
@@ -412,7 +456,7 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
     mixChannels( in2, 3, &harris_c2, 1, from_to2, 3 );
     for(int x=0; x<harris_corners2.cols; x++){
         for(int y=0; y<harris_corners2.rows; y++){
-            if ((int)harris_corners2.at<uchar>(y,x)==3 || (int)harris_corners2.at<uchar>(y,x)==3){
+            if ((int)harris_corners2.at<uchar>(y,x)==1 || (int)harris_corners2.at<uchar>(y,x)==3){
                 //circle(harris_c2, Point(x, y), 5, Scalar(0,255,0), 1);
                 circle(harris_c2, Point(x, y), 2, Scalar(0,0,255), 1);
                 keypoints2.push_back( KeyPoint (x, y, 1) );
@@ -421,7 +465,7 @@ void compareWithCN(string nom1, string nom2, double radiusSize, bool samePerson,
     }
 
 
-    std::vector<KeyPoint> cherrypicked2 = *centroidPicking(keypoints2, 40);
+    std::vector<KeyPoint> cherrypicked2 = *centroidPicking(keypoints2,delta1, 40);
     //std::vector<KeyPoint> cherrypicked2 = *KMeansClusterization(keypoints2, 20);
 
     for(int pick =0;pick<cherrypicked2.size();pick++){
@@ -504,8 +548,8 @@ int main( int argc, const char** argv )
                     // deb += std::string("_");
                     // deb+=std::to_string(image);
                     // deb+=std::string("_cleaned.tif");
-                    compareWithCN(string("cleaned/109_1_cleaned.tif"),string("cleaned/106_3_cleaned.tif"),(double)i,true, VP, FP, VN, FN);
-                    printf("VP : %d FP : %d VN : %d FN : %d\n",*VP,*FP,*VN,*FN);
+                    compareWithCN(string("cleaned/106_6_cleaned.tif"),string("cleaned/106_7_cleaned.tif"),(double)i,!true, VP, FP, VN, FN);
+                    printf("radius : %d    VP : %d FP : %d VN : %d FN : %d\n",i,*VP,*FP,*VN,*FN);
                 //}
             //}
         //}
